@@ -1,0 +1,13 @@
+problem_format_version: "2025-09"
+
+name: "Sum of Squares"
+uuid: "11111111-2222-3333-4444-555555555555"
+version: "1.0"
+
+license: "cc0"
+
+limits:
+  time_limit: 1.0
+  memory: 1024
+
+languages: ["all"]
