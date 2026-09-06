@@ -1,4 +1,4 @@
-name: Build DOMjudge Problem ZIPs
+name: Build ZIPs for all problem directories
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v3
 
@@ -14,11 +15,14 @@ jobs:
         id: list
         run: |
           dirs=$(find . -maxdepth 1 -type d ! -name "." ! -name ".github")
-          echo "dirs=$dirs" >> $GITHUB_OUTPUT
+          # 改行を安全に扱うために JSON 配列に変換
+          printf '%s\n' "$dirs" | jq -R . | jq -s . > dirs.json
+          echo "dirs=$(cat dirs.json)" >> $GITHUB_OUTPUT
 
       - name: Create ZIPs
         run: |
-          for d in ${{ steps.list.outputs.dirs }}; do
+          dirs=${{ steps.list.outputs.dirs }}
+          echo "$dirs" | jq -r '.[]' | while read d; do
             name=$(basename "$d")
             zip -r "${name}.zip" "$d"
           done
@@ -26,5 +30,5 @@ jobs:
       - name: Upload ZIPs to Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: auto-build
+          tag_name: auto-zip-latest
           files: "*.zip"
