@@ -1,0 +1,50 @@
+name: Zip subdirectory
+
+on:
+  workflow_dispatch:
+    inputs:
+      path:
+        description: 'Path to the directory to zip (relative to repo root)'
+        required: true
+        default: ''
+      zip_name:
+        description: 'Optional zip filename (e.g. myproblem.zip)'
+        required: false
+        default: ''
+      ref:
+        description: 'Git ref (branch, tag, or commit) to checkout. Leave empty for default branch.'
+        required: false
+        default: ''
+
+jobs:
+  zip:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.ref }}
+
+      - name: Ensure zip is installed
+        run: sudo apt-get update && sudo apt-get install -y zip
+
+      - id: pack
+        name: Create zip of subdirectory
+        run: |
+          set -e
+          TARGET_PATH="${{ github.event.inputs.path }}"
+          if [ -z "$TARGET_PATH" ]; then echo "No path provided"; exit 1; fi
+          if [ ! -e "$TARGET_PATH" ]; then echo "Path '$TARGET_PATH' does not exist"; ls -la; exit 1; fi
+          ZIP_NAME="${{ github.event.inputs.zip_name }}"
+          if [ -z "$ZIP_NAME" ]; then
+            ZIP_NAME="$(basename "$TARGET_PATH").zip"
+          fi
+          zip -r "$ZIP_NAME" "$TARGET_PATH" -x "**/.git/**" "**/node_modules/**"
+          echo "zip=$ZIP_NAME" >> $GITHUB_OUTPUT
+
+      - name: Upload zip as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.pack.outputs.zip }}
+          path: ${{ steps.pack.outputs.zip }}
