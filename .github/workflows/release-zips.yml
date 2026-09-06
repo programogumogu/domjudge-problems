@@ -1,0 +1,28 @@
+name: Create Release ZIPs
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  create-zips:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Create ZIP files for subfolders
+        run: |
+          # 各サブフォルダをZip化
+          for dir in */; do
+            if [ "$dir" != ".github/" ]; then
+              folder_name="${dir%/}"
+              zip -r "$folder_name-${{ github.ref_name }}.zip" "$folder_name/"
+            fi
+          done
+          ls -lh *.zip
+          
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            *.zip
