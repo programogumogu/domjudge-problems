@@ -1,0 +1,30 @@
+name: Build DOMjudge Problem ZIPs
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Find problem directories
+        id: list
+        run: |
+          dirs=$(find . -maxdepth 1 -type d ! -name "." ! -name ".github")
+          echo "dirs=$dirs" >> $GITHUB_OUTPUT
+
+      - name: Create ZIPs
+        run: |
+          for d in ${{ steps.list.outputs.dirs }}; do
+            name=$(basename "$d")
+            zip -r "${name}.zip" "$d"
+          done
+
+      - name: Upload ZIPs to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: auto-build
+          files: "*.zip"
