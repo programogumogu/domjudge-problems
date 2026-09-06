@@ -14,9 +14,16 @@ jobs:
       - name: Find problem directories
         id: list
         run: |
-          dirs=$(find . -maxdepth 1 -type d ! -name "." ! -name ".github")
-          # 改行を安全に扱うために JSON 配列に変換
+          # 除外したいディレクトリを明示的に指定
+          dirs=$(find . -maxdepth 1 -type d \
+            ! -name "." \
+            ! -name ".github" \
+            ! -name ".git")
+
+          # 改行を安全に扱うため JSON 配列に変換
           printf '%s\n' "$dirs" | jq -R . | jq -s . > dirs.json
+
+          # JSON を GITHUB_OUTPUT に安全に書き込む
           echo "dirs=$(cat dirs.json)" >> $GITHUB_OUTPUT
 
       - name: Create ZIPs
